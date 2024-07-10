@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application de Gestion de Notes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 900px;
+            margin: auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        input[type="email"], input[type="password"], input[type="text"], button {
+            display: block;
+            width: calc(100% - 20px);
+            margin: 10px auto;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .hidden {
+            display: none;
+        }
+        .theme-button {
+            background-color: #28a745;
+        }
+        .theme-button:hover {
+            background-color: #218838;
+        }
+        .settings {
+            margin-top: 20px;
+        }
+        .settings button {
+            background-color: #007bff;
+        }
+        .settings button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Section Connexion -->
+    <div id="login-section" class="container">
+        <h1>Connexion</h1>
+        <input type="email" id="login-email" placeholder="E-mail" />
+        <input type="password" id="login-password" placeholder="Mot de passe" />
+        <button onclick="login()">Se connecter</button>
+        <p>Pas encore de compte ? <a href="javascript:showSignup()">Inscrivez-vous</a></p>
+    </div>
+
+    <!-- Section Inscription -->
+    <div id="signup-section" class="container hidden">
+        <h1>Inscription</h1>
+        <input type="email" id="signup-email" placeholder="E-mail" />
+        <input type="password" id="signup-password" placeholder="Mot de passe" />
+        <button onclick="signup()">S'inscrire</button>
+        <p>Déjà un compte ? <a href="javascript:showLogin()">Connectez-vous</a></p>
+    </div>
+
+    <!-- Section Accueil -->
+    <div id="home-section" class="container hidden">
+        <h1 id="user-name">Bonjour, <span id="user-display-name">User Name</span></h1>
+        <button onclick="createNote()">Créer une note</button>
+        <button onclick="searchNote()">Rechercher une note</button>
+        <button onclick="modifyNote()">Modifier une note</button>
+        <button onclick="shareNote()">Partager une note</button>
+        <button onclick="readNote()">Lire une note</button>
+
+        <div class="settings">
+            <h2>Réglages</h2>
+            <button onclick="showSettings()">Réglages</button>
+            <button onclick="logout()">Déconnexion</button>
+        </div>
+
+        <div id="notes-list">
+            <!-- Les notes seront affichées ici -->
+        </div>
+    </div>
+
+    <!-- Section Réglages -->
+    <div id="settings-section" class="container hidden">
+        <h1>Réglages</h1>
+        <button onclick="showThemeOptions()">Changer le thème</button>
+        <button onclick="showNameChange()">Changer le nom</button>
+        <button onclick="showHome()">Retour à l'accueil</button>
+    </div>
+
+    <!-- Section Changer Nom -->
+    <div id="name-change-section" class="container hidden">
+        <h1>Changer le nom</h1>
+        <input type="text" id="new-name" placeholder="Nouveau nom" />
+        <button onclick="changeName()">Enregistrer le nom</button>
+        <button onclick="showSettings()">Retour</button>
+    </div>
+
+    <script>
+        function showSignup() {
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('signup-section').classList.remove('hidden');
+            document.getElementById('home-section').classList.add('hidden');
+            document.getElementById('settings-section').classList.add('hidden');
+            document.getElementById('name-change-section').classList.add('hidden');
+        }
+
+        function showLogin() {
+            document.getElementById('login-section').classList.remove('hidden');
+            document.getElementById('signup-section').classList.add('hidden');
+            document.getElementById('home-section').classList.add('hidden');
+            document.getElementById('settings-section').classList.add('hidden');
+            document.getElementById('name-change-section').classList.add('hidden');
+        }
+
+        function showHome() {
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('signup-section').classList.add('hidden');
+            document.getElementById('home-section').classList.remove('hidden');
+            document.getElementById('settings-section').classList.add('hidden');
+            document.getElementById('name-change-section').classList.add('hidden');
+            showNotes(); // Affiche les notes lors du chargement
+            updateUserName(); // Met à jour le nom de l'utilisateur
+        }
+
+        function showSettings() {
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('signup-section').classList.add('hidden');
+            document.getElementById('home-section').classList.add('hidden');
+            document.getElementById('settings-section').classList.remove('hidden');
+            document.getElementById('name-change-section').classList.add('hidden');
+        }
+
+        function showThemeOptions() {
+            const theme = prompt("Choisissez un thème de couleur :\n1. Rouge + Rose\n2. Noir + Blanc\n3. Vert + Vert clair\n4. Bleu + Bleu clair");
+            if (theme) {
+                setTheme(theme);
+            }
+        }
+
+        function showNameChange() {
+            document.getElementById('settings-section').classList.add('hidden');
+            document.getElementById('name-change-section').classList.remove('hidden');
+        }
+
+        function signup() {
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+
+            if (!email || !password) {
+                alert("Tous les champs doivent être remplis.");
+                return;
+            }
+
+            // Stockage des informations de l'utilisateur
+            localStorage.setItem('user', email);
+            localStorage.setItem('password', password); // Notez que ceci est simpliste; dans une application réelle, vous devriez hasher le mot de passe
+            localStorage.setItem('displayName', 'User Name'); // Nom par défaut
+
+            // Redirection vers la page d'accueil après inscription
+            showHome();
+        }
+
+        function login() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            const storedEmail = localStorage.getItem('user');
+            const storedPassword = localStorage.getItem('password');
+
+            if (email === storedEmail && password === storedPassword) {
+                // Redirection vers la page d'accueil après connexion réussie
+                showHome();
+            } else {
+                alert("E-mail ou mot de passe incorrect.");
+            }
+        }
+
+        function logout() {
+            // Ne supprime pas les informations d'inscription, juste la session
+            document.getElementById('login-section').classList.remove('hidden');
+            document.getElementById('signup-section').classList.add('hidden');
+            document.getElementById('home-section').classList.add('hidden');
+            document.getElementById('settings-section').classList.add('hidden');
+            document.getElementById('name-change-section').classList.add('hidden');
+        }
+
+        function createNote() {
+            const subject = prompt("Entrez le sujet de la note :");
+            const matter = prompt("Entrez la matière de la note :");
+            const content = prompt("Entrez le contenu de la note :");
+
+            if (!matter || !subject || !content) {
+                alert("Tous les champs doivent être remplis.");
+                return;
+            }
+
+            const notes = JSON.parse(localStorage.getItem('notes')) || {};
+            if (!notes[matter]) {
+                notes[matter] = {};
+            }
+            notes[matter][subject] = content;
+            localStorage.setItem('notes', JSON.stringify(notes));
+            alert("Note ajoutée avec succès.");
+        }
+
+        function searchNote() {
+            const matter = prompt("Entrez la matière pour rechercher :");
+            const notes = JSON.parse(localStorage.getItem('notes')) || {};
+            if (notes[matter]) {
+                const subject = prompt("Entrez le sujet de la note à rechercher :");
+                if (notes[matter][subject]) {
+                    alert(`Contenu de la note :\n${notes[matter][subject]}`);
+                } else {
+                    alert("Aucune note trouvée pour ce sujet.");
+                }
+            } else {
+                alert("Aucune note trouvée pour cette matière.");
+            }
+        }
+
+        function modifyNote() {
+            const matter = prompt("Entrez la matière de la note à modifier :");
+            const notes = JSON.parse(localStorage.getItem('notes')) || {};
+            if (notes[matter]) {
+                const subject = prompt("Entrez le sujet de la note à modifier :");
+                if (notes[matter][subject]) {
+                    const newContent = prompt("Entrez le nouveau contenu de la note :");
+                    notes[matter][subject] = newContent;
+                    localStorage.setItem('notes', JSON.stringify(notes));
+                    alert("Note modifiée avec succès.");
+                } else {
+                    alert("Aucune note trouvée pour ce sujet.");
+                }
+            } else {
+                alert("Aucune note trouvée pour cette matière.");
+            }
+        }
+
+        function shareNote() {
+            const matter = prompt("Entrez la matière de la note à partager :");
+            const notes = JSON.parse(localStorage.getItem('notes')) || {};
+            if (notes[matter]) {
+                const subject = prompt("Entrez le sujet de la note à partager :");
+                if (notes[matter][subject]) {
+                    const email = prompt("Entrez l'email de la personne avec qui partager :");
+                    alert(`Note partagée avec ${email}`);
+                } else {
+                    alert("Aucune note trouvée pour ce sujet.");
+                }
+            } else {
+                alert("Aucune note trouvée pour cette matière.");
+            }
+        }
+
+        function readNote() {
+            const matter = prompt("Entrez la matière de la note à lire :");
+            const notes = JSON.parse(localStorage.getItem('notes')) || {};
+            if (notes[matter]) {
+                const subject = prompt("Entrez le sujet de la note à lire :");
+                if (notes[matter][subject]) {
+                    alert(`Contenu de la note :\n${notes[matter][subject]}`);
+                } else {
+                    alert("Aucune note trouvée pour ce sujet.");
+                }
+            } else {
+                alert("Aucune note trouvée pour cette matière.");
+            }
+        }
+
+        function updateUserName() {
+            const displayName = localStorage.getItem('displayName') || 'User Name';
+            document.getElementById('user-display-name').textContent = displayName;
+        }
+
+        function changeName() {
+            const newName = document.getElementById('new-name').value;
+            if (newName) {
+                localStorage.setItem('displayName', newName);
+                alert("Nom mis à jour avec succès.");
+                showHome(); // Retour à la page d'accueil
+            } else {
+                alert("Le nom ne peut pas être vide.");
+            }
+        }
+
+        function setTheme(theme) {
+            switch (theme) {
+                case '1':
+                    document.body.style.backgroundColor = '#ffcccc'; // Rouge clair
+                    document.querySelector('.container').style.backgroundColor = '#ff66b2'; // Rose
+                    break;
+                case '2':
+                    document.body.style.backgroundColor = '#000000'; // Noir
+                    document.querySelector('.container').style.backgroundColor = '#ffffff'; // Blanc
+                    break;
+                case '3':
+                    document.body.style.backgroundColor = '#ccffcc'; // Vert clair
+                    document.querySelector('.container').style.backgroundColor = '#009900'; // Vert
+                    break;
+                case '4':
+                    document.body.style.backgroundColor = '#cce0ff'; // Bleu clair
+                    document.querySelector('.container').style.backgroundColor = '#0033cc'; // Bleu
+                    break;
+                default:
+                    alert('Option invalide');
+            }
+        }
+
+        function showNotes() {
+            const notes = JSON.parse(localStorage.getItem('notes')) || {};
+            const notesList = document.getElementById('notes-list');
+            notesList.innerHTML = '';
+
+            for (const matter in notes) {
+                const matterDiv = document.createElement('div');
+                matterDiv.innerHTML = `<h3>Matière : ${matter}</h3>`;
+                
+                for (const subject in notes[matter]) {
+                    const noteDiv = document.createElement('div');
+                    noteDiv.innerHTML = `<strong>Sujet : ${subject}</strong><p>${notes[matter][subject]}</p>`;
+                    matterDiv.appendChild(noteDiv);
+                }
+                
+                notesList.appendChild(matterDiv);
+            }
+        }
+
+        // Affiche la section de connexion par défaut
+        showLogin();
+    </script>
+
+</body>
+</html>
